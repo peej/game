@@ -38,6 +38,7 @@ describe Table do
 
   it "allows a token to be placed in the corner of a card" do
     card = Card.new(:distributor_road, :through_road, :through_road, :through_road)
+    @table.placeCard(card, [0, 1])
     @table.placeToken(Token.new(), card, :north_west)
     expect(card.token?).to eq true
     expect(card.token?(:north_west)).to eq true
@@ -54,9 +55,10 @@ describe Table do
     @table.placeCard(card3, [1, 0])
     @table.placeCard(card4, [1, -1])
 
-    #lambda { @table.placeToken(Token.new(), card2, :north_west) }.should raise_error(Table::RegionAlreadyContainsTokenException)
-
     @table.placeToken(Token.new(), card1, :north_east)
+
+    lambda { @table.placeToken(Token.new(), card2, :north_west) }.should raise_error(Table::RegionAlreadyContainsTokenException)
+
   end
 
 end
