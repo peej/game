@@ -52,17 +52,17 @@ class Table
       raise NotNextToAnotherCardException.new("Card must be placed next to an existing card")
     end
 
-    if card_to_north != nil && card_to_north.south != card.north
-      raise CardDoesNotFitException.new("Card does not fit next to card to the north")
+    if card_to_north != nil && !card_to_north.fits_against?(card, :south)
+      raise CardDoesNotFitException.new("Card #{card} does not fit next to card #{card_to_north} to the north")
     end
-    if card_to_east != nil && card_to_east.west != card.east
-      raise CardDoesNotFitException.new("Card does not fit next to card to the east")
+    if card_to_east != nil && !card_to_east.fits_against?(card, :west)
+      raise CardDoesNotFitException.new("Card #{card} does not fit next to card #{card_to_east} to the east")
     end
-    if card_to_south != nil && card_to_south.north != card.south
-      raise CardDoesNotFitException.new("Card does not fit next to card to the south")
+    if card_to_south != nil && !card_to_south.fits_against?(card, :north)
+      raise CardDoesNotFitException.new("Card #{card} does not fit next to card #{card_to_south} to the south")
     end
-    if card_to_west != nil && card_to_west.east != card.west
-      raise CardDoesNotFitException.new("Card does not fit next to card to the west")
+    if card_to_west != nil && !card_to_west.fits_against?(card, :east)
+      raise CardDoesNotFitException.new("Card #{card} does not fit next to card #{card_to_west} to the west")
     end
 
     @positions[x][y] = card
@@ -71,80 +71,78 @@ class Table
 
   def region(card, corner)
     index_x = @positions.index { |arr| arr.include? card if arr.class == Array }
-    return nil if index_x == nil
+    if index_x == nil
+      raise Exception.new("Card not found on table")
+    end
     index_y = @positions[index_x].index(card)
     
-    region = [[nil]]
-    region[index_x] = [nil] if region[index_x] == nil
+    #print "\n", index_x, ",", index_y, ":", corner, "\n"
 
-    region[index_x][index_y] = card
+    data = []
 
-    next_x, next_y = index_x, index_y
-    next_corner = corner
-
-    begin # walk anti-clockwise
-      if next_corner == :north_east
-        next_x += 1
-        next_card = @positions[next_x][next_y]
-        next_card.corner = next_corner
-        next_corner = :north_west if next_card != nil && next_card.block_corner?(:north)
-      elsif next_corner == :north_west
-        next_y -= 1
-        next_card = @positions[next_x][next_y]
-        next_card.corner = next_corner
-        next_corner = :south_west if next_card != nil && next_card.block_corner?(:west)
-      elsif next_corner == :south_west
-        next_x -= 1
-        next_card = @positions[next_x][next_y]
-        next_card.corner = next_corner
-        next_corner = :south_east if next_card != nil && next_card.block_corner?(:south)
-      elsif next_corner == :south_east
-        next_y += 1
-        next_card = @positions[next_x][next_y]
-        next_card.corner = next_corner
-        next_corner = :north_east if next_card != nil && next_card.block_corner?(:east)
+    [:clockwise, :anti_clockwise].each do |direction|
+      next_card = card
+      next_val = {
+        x: index_x,
+        y: index_y,
+        corner: corner
+      }
+      case direction
+      when :clockwise
+        actions = {
+          north_east: [:north, [:y, -1, :south_east], [:x, -1, :north_east]],
+          north_west: [:west, [:x, -1, :north_east], [:x, -1, :north_west]],
+          south_west: [:south, [:y, 1, :north_west], [:x, 1, :south_west]],
+          south_east: [:east, [:x, 1, :south_west], [:y, -1, :south_east]]
+        }
+      when :anti_clockwise
+        actions = {
+          north_east: [:east, [:x, 1, :north_west], [:y, 1, :north_east]],
+          north_west: [:north, [:y, -1, :south_west], [:x, 1, :north_west]],
+          south_west: [:west, [:x, -1, :south_east], [:y, -1, :south_west]],
+          south_east: [:north, [:y, 1, :north_east], [:x, -1, :south_east]]
+        }
       end
-      region[next_x] = [nil] if region[next_x] == nil
-      region[next_x][next_y] = next_card
-    end until next_card == nil || next_card == card
 
-    if next_card != card
-      next_x, next_y = index_x, index_y
-      next_corner = corner
+      begin # walk anti-clockwise
+        data.push yield next_card, next_val[:corner]
+        
+        bc, yes, no = actions[next_val[:corner]]
 
-      begin # walk clockwise
-        if next_corner == :north_east
-          next_y -= 1
-          next_card = @positions[next_x][next_y]
-          next_card.corner = next_corner
-          next_corner = :south_east if next_card != nil && next_card.block_corner?(:east)
-        elsif next_corner == :south_east
-          next_x += 1
-          next_card = @positions[next_x][next_y]
-          next_card.corner = next_corner
-          next_corner = :south_west if next_card != nil && next_card.block_corner?(:south)
-        elsif next_corner == :south_west
-          next_y += 1
-          next_card = @positions[next_x][next_y]
-          next_card.corner = next_corner
-          next_corner = :north_west if next_card != nil && next_card.block_corner?(:west)
-        elsif next_corner == :north_west
-          next_x -= 1
-          next_card = @positions[next_x][next_y]
-          next_card.corner = next_corner
-          next_corner = :north_east if next_card != nil && next_card.block_corner?(:north)
+        if next_card == nil
+          break
+        elsif next_card.block_corner?(bc)
+          next_val[yes[0]] += yes[1]
+          next_val[:corner] = yes[2]
+        else
+          next_val[no[0]] += no[1]
+          next_val[:corner] = no[2]
         end
-        region[next_x] = [nil] if region[next_x] == nil
-        region[next_x][next_y] = next_card
+
+        next_card = @positions[next_val[:x]][next_val[:y]]
+
       end until next_card == nil || next_card == card
+
+      break if next_card == card
+
     end
 
-    region
+    data.uniq
   end
 
   def placeToken(token, card, corner)
-    region = region(card, corner)
-    print region.flatten
+    r = region(card, corner) do |next_card, next_corner|
+      begin
+        #print next_card.to_s, ":", next_corner, " "
+        next_card.token.corner == next_corner
+      rescue NoMethodError
+        false
+      end
+    end
+    #print r
+    if r.include?(true)
+      raise RegionAlreadyContainsTokenException.new("The region already has a token in it")
+    end
 
     token.corner = corner
     card.token = token
