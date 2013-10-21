@@ -139,7 +139,9 @@ class Table
         false
       end
     end
+
     #print r
+
     if r.include?(true)
       raise RegionAlreadyContainsTokenException.new("The region already has a token in it")
     end

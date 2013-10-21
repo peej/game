@@ -83,7 +83,6 @@ describe Table do
     lambda { @table.placeToken(Token.new(), card2, :south_west) }.should raise_error(Table::RegionAlreadyContainsTokenException)
   end
 
-
   it "can find a path from a token to the goal" do
 
   end
