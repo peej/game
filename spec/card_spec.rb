@@ -10,6 +10,11 @@ describe Card do
     expect(card.type).to eq :abac
   end
 
+  it "can be created via a type code" do
+    card = Card.new(:tdtd)
+    expect(card.type).to eq :tdtd
+  end
+
   it "can be rotated clockwise" do
     card = Card.new(:through_road, :distributor_road, :access_road, :access_road_no_veh)
     card.rotate(:clockwise)

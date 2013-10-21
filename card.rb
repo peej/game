@@ -11,12 +11,30 @@ class Card
     access_road_ped_only: "c"
   }
 
-  def initialize(north = :through_road, east = :through_road, south = :through_road, west = :through_road)
-    @north = north
-    @east = east
-    @south = south
-    @west = west
+  TypeMatches = {
+    through_road: [:through_road],
+    distributor_road: [:distributor_road],
+    access_road: [:access_road, :access_road_no_veh, :access_road_ped_only],
+    access_road_no_veh: [:access_road, :access_road_no_veh, :access_road_ped_only],
+    access_road_ped_only: [:access_road, :access_road_no_veh, :access_road_ped_only]
+  }
+
+  def initialize(*args)
     @token = nil
+
+    if args.size == 1
+      @north, val = Types.rassoc(args[0][0])
+      @east, val = Types.rassoc(args[0][1])
+      @south, val = Types.rassoc(args[0][2])
+      @west, val = Types.rassoc(args[0][3])
+    elsif args.size == 4
+      @north = args[0] || :through_road
+      @east = args[1] || :through_road
+      @south = args[2] || :through_road
+      @west = args[3] || :through_road
+    else
+      raise Exception.new("Provide either a type code or parameters for north, east, south and west")
+    end
   end
 
   def type
@@ -62,13 +80,27 @@ class Card
     side_type == :through_road || side_type == :distributor_road
   end
 
+  def fits_against?(card, direction)
+    case direction
+    when :north
+      TypeMatches[@north].include? card.south
+    when :east
+      TypeMatches[@east].include? card.west
+    when :south
+      TypeMatches[@south].include? card.north
+    when :west
+      TypeMatches[@west].include? card.east
+    end
+  end
+
   def to_s
-    output = "+---+\n"
-    output += "| #{Types[@north]} |\n"
-    output += "|#{Types[@west]}+#{Types[@east]}|\n"
-    output += "| #{Types[@south]} |\n"
-    output += "+---+"
-    output
+    #output = "+---+\n"
+    #output += "| #{Types[@north]} |\n"
+    #output += "|#{Types[@west]}+#{Types[@east]}|\n"
+    #output += "| #{Types[@south]} |\n"
+    #output += "+---+"
+    #output
+    type
   end
 
 end

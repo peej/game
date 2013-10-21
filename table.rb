@@ -22,10 +22,16 @@ class Table
   end
 
   def to_s
+    @positions.each do |row|
 
+    end
   end
 
   def placeCard(card, position)
+
+    if card.class.name != "Card"
+      card = Card.new(card)
+    end
     
     x, y = SIZE + position[0], SIZE + position[1]
 
