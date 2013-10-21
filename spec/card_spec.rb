@@ -33,26 +33,4 @@ describe Card do
     expect(card.type).to eq :abtd
   end
 
-  it "can output itself as ascii art" do
-    card = Card.new(:through_road, :distributor_road, :access_road, :access_road_no_veh)
-    output = card.to_s
-    expect(output + "\n").to eq <<-EOF
-+---+
-| t |
-|b+d|
-| a |
-+---+
-EOF
-
-    card = Card.new(:access_road, :access_road_no_veh, :access_road_ped_only, :through_road)
-    output = card.to_s
-    expect(output + "\n").to eq <<-EOF
-+---+
-| a |
-|t+b|
-| c |
-+---+
-EOF
-  end
-
 end
