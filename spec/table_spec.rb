@@ -26,6 +26,8 @@ describe Table do
     0.upto(8) { |foo| @table.placeCard cards[2][foo], [foo - 3, -1]}
     0.upto(8) { |foo| @table.placeCard cards[1][foo], [foo - 3, -2]}
     0.upto(8) { |foo| @table.placeCard cards[0][foo], [foo - 3, -3]}
+
+    @table.placeToken(Token.new(), @table.card(0, -1), :south_east)
     
   end
 

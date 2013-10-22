@@ -78,8 +78,6 @@ class Table
     
     #print "\n", index_x, ",", index_y, ":", corner, "\n"
 
-    data = []
-
     [:clockwise, :anti_clockwise].each do |direction|
       next_card = card
       next_val = {
@@ -90,22 +88,24 @@ class Table
       case direction
       when :clockwise
         actions = {
-          north_east: [:north, [:y, -1, :south_east], [:x, -1, :north_east]],
-          north_west: [:west, [:x, -1, :north_east], [:x, -1, :north_west]],
-          south_west: [:south, [:y, 1, :north_west], [:x, 1, :south_west]],
-          south_east: [:east, [:x, 1, :south_west], [:y, -1, :south_east]]
+          north_east: [:north, [:y, -1, :south_east], [:x, -1]],
+          north_west: [:west, [:x, -1, :north_east], [:x, -1]],
+          south_west: [:south, [:y, 1, :north_west], [:x, 1]],
+          south_east: [:east, [:x, 1, :south_west], [:y, -1]]
         }
       when :anti_clockwise
         actions = {
-          north_east: [:east, [:x, 1, :north_west], [:y, 1, :north_east]],
-          north_west: [:north, [:y, -1, :south_west], [:x, 1, :north_west]],
-          south_west: [:west, [:x, -1, :south_east], [:y, -1, :south_west]],
-          south_east: [:north, [:y, 1, :north_east], [:x, -1, :south_east]]
+          north_east: [:east, [:x, 1, :north_west], [:y, 1]],
+          north_west: [:north, [:y, -1, :south_west], [:x, 1]],
+          south_west: [:west, [:x, -1, :south_east], [:y, -1]],
+          south_east: [:north, [:y, 1, :north_east], [:x, -1]]
         }
       end
 
-      begin # walk anti-clockwise
-        data.push yield next_card, next_val[:corner]
+      begin
+        if yield next_card, next_val[:corner]
+          break
+        end
         
         bc, yes, no = actions[next_val[:corner]]
 
@@ -116,7 +116,6 @@ class Table
           next_val[:corner] = yes[2]
         else
           next_val[no[0]] += no[1]
-          next_val[:corner] = no[2]
         end
 
         next_card = @positions[next_val[:x]][next_val[:y]]
@@ -126,23 +125,21 @@ class Table
       break if next_card == card
 
     end
-
-    data.uniq
   end
 
   def placeToken(token, card, corner)
-    r = region(card, corner) do |next_card, next_corner|
+    region_contains_token = false
+    region(card, corner) do |next_card, next_corner|
       begin
-        #print next_card.to_s, ":", next_corner, " "
-        next_card.token.corner == next_corner
+        if next_card.token.corner == next_corner
+          region_contains_token = true
+        end
       rescue NoMethodError
         false
       end
     end
 
-    #print r
-
-    if r.include?(true)
+    if region_contains_token
       raise RegionAlreadyContainsTokenException.new("The region already has a token in it")
     end
 
