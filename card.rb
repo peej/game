@@ -19,6 +19,12 @@ class Card
     access_road_ped_only: [:access_road, :access_road_no_veh, :access_road_ped_only]
   }
 
+  TransitAllowed = {
+    pedestrian: [:through_road, :distributor_road, :access_road, :access_road_no_veh, :access_road_ped_only],
+    bicycle: [:through_road, :distributor_road, :access_road, :access_road_no_veh],
+    car: [:through_road, :distributor_road, :access_road]
+  }
+
   def initialize(*args)
     @token = nil
 
@@ -78,6 +84,19 @@ class Card
   def block_corner?(side)
     side_type = instance_variable_get("@#{side}")
     side_type == :through_road || side_type == :distributor_road
+  end
+
+  def can_travel(direction, transit_type)
+    case direction
+    when :north
+      TransitAllowed[transit_type].include? @north
+    when :east
+      TransitAllowed[transit_type].include? @east
+    when :south
+      TransitAllowed[transit_type].include? @south
+    when :west
+      TransitAllowed[transit_type].include? @west
+    end
   end
 
   def fits_against?(card, direction)

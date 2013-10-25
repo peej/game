@@ -154,4 +154,69 @@ class Table
     card.token = token
   end
 
+  def can_travel(position, direction, transit_type)
+
+    card = card(position[0], position[1])
+    if !card
+      raise Exception.new
+    end
+
+    if !card.can_travel :north, transit_type
+      return false
+    end
+
+    case direction
+    when :north
+      card(position[0], position[1] - 1).can_travel :south, transit_type
+    when :east
+      card(position[0] + 1, position[1]).can_travel :west, transit_type
+    when :south
+      card(position[0], position[1] + 1).can_travel :north, transit_type
+    when :west
+      card(position[0] - 1, position[1]).can_travel :east, transit_type
+    end
+  end
+
+  def is_valid_route?(token)
+    index_x, index_y = nil
+    catch(:stop) do
+      @positions.each_index do |x|
+        @positions[x].each_index do |y|
+          if y != nil && @positions[x][y].class == Card && @positions[x][y].token == token
+            index_x, index_y = x - SIZE, y - SIZE
+            throw :stop
+          end
+        end if @positions[x].class == Array
+      end
+    end
+
+    if index_x == nil
+      raise Exception.new("Token not found on table")
+    end
+    
+    card = card index_x, index_y
+
+    angle = 1
+    direction = 1
+
+    
+    if index_x < 0
+      while index_x != 0 do
+        index_x += 1
+      end
+    end
+
+    if index_y > 0
+      while index_y != 0 do
+        card_north = @positions[index_x][index_y - 1]
+        if can_travel [index_x, index_y], :north, token.type
+          index_y -= 1
+        end
+      end
+    end
+
+    print index_x, ":", index_y, card.to_s
+
+  end
+
 end
