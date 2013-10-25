@@ -17,76 +17,83 @@ describe Table do
       [:adad, :tdtd, :dddd, :adbd, :adad, :ddad, :adad, :tdtd, :adad]
     ]
 
-    4.upto(8) { |foo| @table.placeCard cards[3][foo], [foo - 3, 0]}
-    8.downto(0) { |foo| @table.placeCard cards[4][foo], [foo - 3, 1]}
-    8.downto(0) { |foo| @table.placeCard cards[5][foo], [foo - 3, 2]}
-    8.downto(0) { |foo| @table.placeCard cards[6][foo], [foo - 3, 3]}
+    4.upto(8) { |foo| @table.place_card cards[3][foo], [foo - 3, 0]}
+    8.downto(0) { |foo| @table.place_card cards[4][foo], [foo - 3, 1]}
+    8.downto(0) { |foo| @table.place_card cards[5][foo], [foo - 3, 2]}
+    8.downto(0) { |foo| @table.place_card cards[6][foo], [foo - 3, 3]}
 
-    2.downto(0) { |foo| @table.placeCard cards[3][foo], [foo - 3, 0]}
-    0.upto(8) { |foo| @table.placeCard cards[2][foo], [foo - 3, -1]}
-    0.upto(8) { |foo| @table.placeCard cards[1][foo], [foo - 3, -2]}
-    0.upto(8) { |foo| @table.placeCard cards[0][foo], [foo - 3, -3]}
+    2.downto(0) { |foo| @table.place_card cards[3][foo], [foo - 3, 0]}
+    0.upto(8) { |foo| @table.place_card cards[2][foo], [foo - 3, -1]}
+    0.upto(8) { |foo| @table.place_card cards[1][foo], [foo - 3, -2]}
+    0.upto(8) { |foo| @table.place_card cards[0][foo], [foo - 3, -3]}
 
-    @table.placeToken(Token.new(), @table.card(0, -1), :south_east)
+    @table.place_token(Token.new(), @table.get_card(0, -1), :south_east)
     
   end
 
   it "should have the goal card on the table" do
-    expect(@table.card(0, 0)).to be_a(Goal)
+    expect(@table.get_card(0, 0)).to be_a(Goal)
   end
 
   it "can have cards placed upon it" do
-    @table.placeCard :adad, [6, 0]
+    @table.place_card :adad, [6, 0]
   end
 
   it "can not have two cards placed into the same location" do
-    lambda { @table.placeCard :dada, [1, 0] }.should raise_error(Table::PositionNotEmptyException)
+    lambda { @table.place_card :dada, [1, 0] }.should raise_error(Table::PositionNotEmptyException)
   end
 
   it "only allows a card to be placed next to an existing card" do
-    lambda { @table.placeCard :dada, [7, 0] }.should raise_error(Table::NotNextToAnotherCardException)
+    lambda { @table.place_card :dada, [7, 0] }.should raise_error(Table::NotNextToAnotherCardException)
   end
 
   it "only allows a card to be placed if it fits the surrounding cards" do
-    lambda { @table.placeCard :aaaa, [6, 0] }.should raise_error(Table::CardDoesNotFitException)
-    lambda { @table.placeCard :aaaa, [4, -4] }.should raise_error(Table::CardDoesNotFitException)
-    lambda { @table.placeCard :aaaa, [-4, -2] }.should raise_error(Table::CardDoesNotFitException)
-    lambda { @table.placeCard :aaaa, [-1, 4] }.should raise_error(Table::CardDoesNotFitException)
+    lambda { @table.place_card :aaaa, [6, 0] }.should raise_error(Table::CardDoesNotFitException)
+    lambda { @table.place_card :aaaa, [4, -4] }.should raise_error(Table::CardDoesNotFitException)
+    lambda { @table.place_card :aaaa, [-4, -2] }.should raise_error(Table::CardDoesNotFitException)
+    lambda { @table.place_card :aaaa, [-1, 4] }.should raise_error(Table::CardDoesNotFitException)
   end
 
   it "allows a token to be placed in the corner of a card" do
-    card = @table.card 0, 1
-    @table.placeToken(Token.new(), card, :north_west)
+    card = @table.get_card 0, 1
+    @table.place_token(Token.new(), card, :north_west)
     expect(card.token?).to eq true
     expect(card.token?(:north_west)).to eq true
   end
 
   it "disallows a token to be placed into a closed region that already has a token" do
-    card1 = @table.card 2, 0
-    @table.placeToken(Token.new(), card1, :north_east)
+    card1 = @table.get_card 2, 0
+    @table.place_token(Token.new(), card1, :north_east)
 
-    card2 = @table.card 4, 1
-    lambda { @table.placeToken(Token.new(), card2, :south_west) }.should raise_error(Table::RegionAlreadyContainsTokenException)
+    card2 = @table.get_card 4, 1
+    lambda { @table.place_token(Token.new(), card2, :south_west) }.should raise_error(Table::RegionAlreadyContainsTokenException)
   end
 
   it "disallows a token to be placed into an open region that already has a token" do
-    card1 = @table.card -2, 0
-    @table.placeToken(Token.new(), card1, :north_west)
+    card1 = @table.get_card -2, 0
+    @table.place_token(Token.new(), card1, :north_west)
 
-    card2 = @table.card -3, -1
-    lambda { @table.placeToken(Token.new(), card2, :south_west) }.should raise_error(Table::RegionAlreadyContainsTokenException)
+    card2 = @table.get_card -3, -1
+    lambda { @table.place_token(Token.new(), card2, :south_west) }.should raise_error(Table::RegionAlreadyContainsTokenException)
   end
 
+=begin
   it "disallows a token to be placed into a region that has a token in an internal card" do
-    card1 = @table.card 3, 0
-    @table.placeToken(Token.new(), card1, :north_east)
+    card1 = @table.get_card 3, 0
+    @table.place_token(Token.new(), card1, :north_east)
 
-    card2 = @table.card 4, 1
-    lambda { @table.placeToken(Token.new(), card2, :south_west) }.should raise_error(Table::RegionAlreadyContainsTokenException)
+    card2 = @table.get_card 4, 1
+    lambda { @table.place_token(Token.new(), card2, :south_west) }.should raise_error(Table::RegionAlreadyContainsTokenException)
   end
+=end
+
 
   it "can find a path from a token to the goal" do
+    card = @table.get_card -3, 1
+    token = Token.new()
+    @table.place_token(token, card, :north_west)
 
+    #@table.is_valid_route? token
   end
 
 end

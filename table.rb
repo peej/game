@@ -15,10 +15,14 @@ class Table
     @positions[SIZE][SIZE] = Goal.new
   end
 
-  def card(x, y)
+  def get_card(x, y)
     @positions[SIZE + x] = [] if @positions[SIZE + x] == nil
-    @positions[SIZE + x][SIZE + y] = [] if @positions[SIZE + x][SIZE + y] == nil
     @positions[SIZE + x][SIZE + y]
+  end
+
+  def set_card(x, y, card)
+    @positions[SIZE + x] = [] if @positions[SIZE + x] == nil
+    @positions[SIZE + x][SIZE + y] = card
   end
 
   def to_s
@@ -27,26 +31,22 @@ class Table
     end
   end
 
-  def placeCard(card, position)
+  def place_card(card, position)
 
     if card.class.name != "Card"
       card = Card.new(card)
     end
     
-    x, y = SIZE + position[0], SIZE + position[1]
+    x, y = position[0], position[1]
 
-    @positions[x] = [nil] if @positions[x] == nil
-    @positions[x - 1] = [nil] if @positions[x - 1] == nil
-    @positions[x + 1] = [nil] if @positions[x + 1] == nil
-
-    if @positions[x][y] != nil
+    if get_card(x, y) != nil
       raise PositionNotEmptyException.new("Can not place card over existing card")
     end
 
-    card_to_north = @positions[x][y - 1]
-    card_to_east = @positions[x + 1][y]
-    card_to_south = @positions[x][y + 1]
-    card_to_west = @positions[x - 1][y]
+    card_to_north = get_card(x, y - 1)
+    card_to_east = get_card(x + 1, y)
+    card_to_south = get_card(x, y + 1)
+    card_to_west = get_card(x - 1, y)
 
     if card_to_north == nil && card_to_east == nil && card_to_south == nil && card_to_west == nil
       raise NotNextToAnotherCardException.new("Card must be placed next to an existing card")
@@ -65,16 +65,21 @@ class Table
       raise CardDoesNotFitException.new("Card #{card} does not fit next to card #{card_to_west} to the west")
     end
 
-    @positions[x][y] = card
+    set_card x, y, card
 
   end
 
-  def region(card, corner)
+  def get_position_of_card(card)
     index_x = @positions.index { |arr| arr.include? card if arr.class == Array }
     if index_x == nil
       raise Exception.new("Card not found on table")
     end
     index_y = @positions[index_x].index(card)
+    return index_x, index_y
+  end
+
+  def region(card, corner)
+    index_x, index_y = get_position_of_card(card)
     
     #print "\n", index_x, ",", index_y, ":", corner, "\n"
 
@@ -127,11 +132,13 @@ class Table
     end
   end
 
-  def placeToken(token, card, corner)
+  def place_token(token, card, corner)
     region_contains_token = false
-    region(card, corner) do |next_card, next_corner|
+    region(card, corner) do |next_card, next_corner = nil|
       begin
-        if next_card.token.corner == next_corner
+        if (next_corner == nil && next_card.token)
+          region_contains_token = true
+        elsif next_card.token.corner == next_corner
           region_contains_token = true
         end
       rescue NoMethodError
